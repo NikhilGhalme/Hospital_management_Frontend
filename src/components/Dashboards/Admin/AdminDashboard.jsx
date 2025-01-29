@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
   Calendar,
   Pill,
   ClipboardList,
-  SettingsComponent,
+  Settings as SettingsIcon,
   BellRing,
   Menu,
   X,
@@ -350,7 +350,7 @@ function Reports() {
   );
 }
 
-function SettingComponent() {
+function SettingsPanel() {
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-800 mb-6">Settings</h2>
@@ -404,8 +404,22 @@ function App() {
   const [selectedPeriod, setSelectedPeriod] = useState('daily');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
+  const dropdownRef = useRef(null);
 
   const currentData = timePeriodsData[selectedPeriod];
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const navigationItems = [
     { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
@@ -413,7 +427,7 @@ function App() {
     { icon: Calendar, label: 'Appointments', id: 'appointments' },
     { icon: Pill, label: 'Medicine', id: 'medicine' },
     { icon: ClipboardList, label: 'Reports', id: 'reports' },
-    { icon: Settings, label: 'Settings', id: 'settings' },
+    { icon: SettingsIcon, label: 'Settings', id: 'settings' },
   ];
 
   const renderContent = () => {
@@ -429,7 +443,7 @@ function App() {
       case 'reports':
         return <Reports />;
       case 'settings':
-        return <Settings />;
+        return <SettingsPanel />;
       default:
         return <Dashboard selectedPeriod={selectedPeriod} currentData={currentData} />;
     }
@@ -437,8 +451,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 ease-in-out fixed h-full`}>
+      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 ease-in-out fixed h-full z-20`}>
         <div className="p-4 flex items-center justify-between">
           <h2 className={`font-bold text-xl text-blue-600 ${!isSidebarOpen && 'hidden'}`}>MedAdmin</h2>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -460,10 +473,8 @@ function App() {
         </nav>
       </aside>
 
-      {/* Main Content */}
       <main className={`flex-1 ${isSidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300 ease-in-out`}>
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 p-4">
+        <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center bg-gray-100 rounded-lg px-4 py-2 flex-1 max-w-xl">
               <Search size={20} className="text-gray-400" />
@@ -485,14 +496,12 @@ function App() {
           </div>
         </header>
 
-        {/* Dashboard Content */}
         <div className="p-6">
           {activeSection === 'dashboard' && (
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
               
-              {/* Time Period Dropdown */}
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center justify-between w-40 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
